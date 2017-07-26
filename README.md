@@ -8,6 +8,7 @@ I'd say I succeeded.
 Don't actually use it, please. This thing doesn't even support SSL!  
 Apart from that, it's simple to use.  
 <details>
+
 ```Rust
 extern crate minttp;
 use std::collections::HashMap;
@@ -40,11 +41,13 @@ fn main() {
 	println!("--------------");
 }
 ```
+
 </details>
 
 Oh wait wrong example! This was the DYI request. It lets you specify everything yourself and is the bare minimum.  
 Here's the way to use it simply:  
 <details>
+
 ```Rust
 extern crate minttp;
 use std::io::Read;
@@ -63,6 +66,7 @@ fn main() {
 	println!("--------------");
 }
 ```
+
 </details>
 
 That's not so hard, right? Great!  
