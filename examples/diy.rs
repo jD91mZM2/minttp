@@ -1,5 +1,5 @@
 extern crate minttp;
-use minttp::{DYIRequest, consts};
+use minttp::{DIYRequest, consts};
 use minttp::response::Response;
 use std::collections::HashMap;
 use std::io::{BufReader, Read};
@@ -11,7 +11,7 @@ fn main() {
 
 	let mut output = String::new();
 	{
-		let conn = minttp::diy_request(&DYIRequest {
+		let conn = minttp::diy_request(&DIYRequest {
 			ssl: false,
 			host: "example.com",
 			port: 80,
@@ -25,7 +25,7 @@ fn main() {
 		println!("Status: {} ({})", response.status, response.description);
 		response.body.read_to_string(&mut output).unwrap();
 	}
-	println!("-------------- DYI Reqest");
+	println!("-------------- DIY Reqest");
 	println!("{}", output);
 	println!("--------------");
 }

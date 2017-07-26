@@ -8,4 +8,4 @@ quoteSubst() {
 
 cp README_template.md README.md
 
-sed -i "s/\[dyi\]/$(quoteSubst "$(cat examples/dyi.rs)")/g;s/\[high-level\]/$(quoteSubst "$(cat examples/high-level.rs)")/g" README.md
+sed -i "s/\[diy\]/$(quoteSubst "$(cat examples/diy.rs)")/g;s/\[high-level\]/$(quoteSubst "$(cat examples/high-level.rs)")/g" README.md

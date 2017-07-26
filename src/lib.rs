@@ -56,7 +56,7 @@ impl io::Read for HttpStream {
 /// The "do it yourself" request parameters.
 /// See [diy_request](fn.diy_request.html)
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DYIRequest<'a> {
+pub struct DIYRequest<'a> {
 	pub ssl: bool,
 	pub host: &'a str,
 	pub port: u16,
@@ -68,7 +68,7 @@ pub struct DYIRequest<'a> {
 }
 /// A minimal http helper.
 /// Literally only opens a TCP connection and serializes.
-pub fn diy_request(req: &DYIRequest) -> Result<HttpStream, Box<std::error::Error>> {
+pub fn diy_request(req: &DIYRequest) -> Result<HttpStream, Box<std::error::Error>> {
 	let mut stream = if req.ssl {
 		#[cfg(feature = "openssl")]
 		{
@@ -111,7 +111,7 @@ pub fn diy_request(req: &DYIRequest) -> Result<HttpStream, Box<std::error::Error
 }
 
 /// This is a high level web request struct which acts like a wrapper around
-/// [DYIRequest](struct.DYIRequest.html).
+/// [DIYRequest](struct.DIYRequest.html).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Request {
 	pub url: Url,
@@ -175,7 +175,7 @@ pub fn request(req: &Request) -> Result<Response<HttpStream>, Box<std::error::Er
 		headers.insert("Content-Length", &_body);
 	}
 
-	let request = DYIRequest {
+	let request = DIYRequest {
 		ssl: req.url.protocol == "https",
 		host: &req.url.host,
 		port: req.url.port,

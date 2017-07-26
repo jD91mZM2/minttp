@@ -21,7 +21,7 @@ Apart from that, it's simple to use.
 
 ```Rust
 extern crate minttp;
-use minttp::{DYIRequest, consts};
+use minttp::{DIYRequest, consts};
 use minttp::response::Response;
 use std::collections::HashMap;
 use std::io::{BufReader, Read};
@@ -33,7 +33,7 @@ fn main() {
 
 	let mut output = String::new();
 	{
-		let conn = minttp::diy_request(&DYIRequest {
+		let conn = minttp::diy_request(&DIYRequest {
 			ssl: false,
 			host: "example.com",
 			port: 80,
@@ -47,7 +47,7 @@ fn main() {
 		println!("Status: {} ({})", response.status, response.description);
 		response.body.read_to_string(&mut output).unwrap();
 	}
-	println!("-------------- DYI Reqest");
+	println!("-------------- DIY Reqest");
 	println!("{}", output);
 	println!("--------------");
 }
@@ -55,7 +55,7 @@ fn main() {
 
 </details>
 
-Oh wait wrong example! This was the DYI request. It lets you specify everything yourself and is the bare minimum.  
+Oh wait wrong example! This was the DIY request. It lets you specify everything yourself and is the bare minimum.  
 Here's the way to use it simply:  
 <details>
 
@@ -82,7 +82,7 @@ fn main() {
 </details>
 
 That's not so hard, right? Great!  
-Everything is built like layers. First is the "DYI" layer where literally everything is, well, "do it yourself".
+Everything is built like layers. First is the "DIY" layer where literally everything is, well, "do it yourself".
 Second is the request layer (which you haven't seen yet),
 and third is the "standard" layer with standard functions like `get`, `post`, et.c.
 

@@ -20,12 +20,12 @@ Apart from that, it's simple to use.
 <details>
 
 ```Rust
-[dyi]
+[diy]
 ```
 
 </details>
 
-Oh wait wrong example! This was the DYI request. It lets you specify everything yourself and is the bare minimum.  
+Oh wait wrong example! This was the DIY request. It lets you specify everything yourself and is the bare minimum.  
 Here's the way to use it simply:  
 <details>
 
@@ -36,7 +36,7 @@ Here's the way to use it simply:
 </details>
 
 That's not so hard, right? Great!  
-Everything is built like layers. First is the "DYI" layer where literally everything is, well, "do it yourself".
+Everything is built like layers. First is the "DIY" layer where literally everything is, well, "do it yourself".
 Second is the request layer (which you haven't seen yet),
 and third is the "standard" layer with standard functions like `get`, `post`, et.c.
 
