@@ -1,6 +1,7 @@
 use std::fmt;
 use std::str::FromStr;
 
+/// URL struct
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Url {
 	pub protocol: String,
@@ -16,11 +17,7 @@ impl FromStr for Url {
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		let mut parts: Vec<_> = s.splitn(2, "://").collect();
-		let protocol = if parts.len() == 2 {
-			parts[0]
-		} else {
-			"http"
-		};
+		let protocol = if parts.len() == 2 { parts[0] } else { "http" };
 
 		parts = parts[parts.len() - 1].splitn(2, ':').collect();
 		let host = parts[0];

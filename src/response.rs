@@ -1,4 +1,3 @@
-
 use std::{self, fmt};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read};
@@ -23,6 +22,7 @@ impl fmt::Display for ResponseParseError {
 	}
 }
 
+/// Response struct
 pub struct Response<Stream: Read> {
 	pub http_version: String,
 	pub status: u16,
@@ -31,6 +31,7 @@ pub struct Response<Stream: Read> {
 	pub body: BufReader<Stream>
 }
 impl<Stream: Read> Response<Stream> {
+	/// Parse a stream into a response struct
 	pub fn new(mut stream: BufReader<Stream>) -> Result<Response<Stream>, Box<std::error::Error>> {
 		let mut status = String::new();
 		stream.read_line(&mut status)?;

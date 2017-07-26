@@ -1,22 +1,27 @@
 #[cfg(feature = "openssl")]
 extern crate openssl;
 
+#[cfg(feature = "openssl")]
+use openssl::ssl::{SslConnectorBuilder, SslMethod, SslStream};
 use std::collections::HashMap;
 use std::io::{self, BufReader, Write};
 use std::net::TcpStream;
-#[cfg(feature = "openssl")]
-use openssl::ssl::{SslMethod, SslConnectorBuilder, SslStream};
 
+/// HTTP Method constants, such as GET, HEAD, et.c
 pub mod consts;
+/// Response parser
 pub mod response;
+/// Minimal URL parser
 pub mod url;
 use response::Response;
 use url::Url;
 
+/// A wrapper around either TcpStream or SslStream to combine them into one
+/// type.
 pub enum HttpStream {
 	Plain(TcpStream),
 	#[cfg(feature = "openssl")]
-	TLS(SslStream<TcpStream>),
+	TLS(SslStream<TcpStream>)
 }
 
 macro_rules! perform {
@@ -48,6 +53,8 @@ impl io::Read for HttpStream {
 	fn read_exact(&mut self, buf: &mut [u8]) -> io::Result<()> { perform!(self, read_exact, buf) }
 }
 
+/// The "do it yourself" request parameters.
+/// See [diy_request](fn.diy_request.html)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DYIRequest<'a> {
 	pub ssl: bool,
@@ -59,6 +66,8 @@ pub struct DYIRequest<'a> {
 	pub headers: &'a HashMap<&'a str, &'a str>,
 	pub body: Option<&'a [u8]>
 }
+/// A minimal http helper.
+/// Literally only opens a TCP connection and serializes.
 pub fn diy_request(req: &DYIRequest) -> Result<HttpStream, Box<std::error::Error>> {
 	let mut stream = if req.ssl {
 		#[cfg(feature = "openssl")]
@@ -101,46 +110,57 @@ pub fn diy_request(req: &DYIRequest) -> Result<HttpStream, Box<std::error::Error
 	Ok(stream)
 }
 
+/// This is a high level web request struct which acts like a wrapper around
+/// [DYIRequest](struct.DYIRequest.html).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Request {
 	pub url: Url,
 	pub method: String,
 	pub headers: HashMap<String, String>,
-	pub body: Option<Vec<u8>>,
+	pub body: Option<Vec<u8>>
 }
 
 impl Request {
+	/// Create a new Request
 	pub fn new(url: Url) -> Request {
 		Request {
 			url: url,
 			method: consts::GET.to_string(),
 			headers: HashMap::new(),
-			body: None,
+			body: None
 		}
 	}
 
+	/// Set the URL
 	pub fn url(mut self, url: Url) -> Self {
 		self.url = url;
 		self
 	}
+	/// Set the request method. See [consts](consts/index.html)
 	pub fn method<S: Into<String>>(mut self, method: S) -> Self {
 		self.method = method.into();
 		self
 	}
+	/// Set the headers. Headers like "Host" are unecessary to add, because
+	/// they are added by default.
 	pub fn header<S: Into<String>>(mut self, key: S, val: S) -> Self {
 		self.headers.insert(key.into(), val.into());
 		self
 	}
+	/// Set the body. This is only supported by a few methods, such as POST,
+	/// PUT and PATCH.
 	pub fn body(mut self, body: Vec<u8>) -> Self {
 		self.body = Some(body);
 		self
 	}
 
-	pub fn request(req: &Request) -> Result<Response<HttpStream>, Box<std::error::Error>> {
-		request(req)
-	}
+	/// Shortcut for [request](fn.request.html)
+	pub fn request(&self) -> Result<Response<HttpStream>, Box<std::error::Error>> { request(self) }
 }
 
+/// High level wrapper around [diy_request](fn.diy_request.html).
+/// Applies important headers, such as "Host", "Connection" and
+/// "Content-Length".
 pub fn request(req: &Request) -> Result<Response<HttpStream>, Box<std::error::Error>> {
 	let _body;
 	let mut headers: HashMap<&str, &str> = HashMap::new();
@@ -166,20 +186,19 @@ pub fn request(req: &Request) -> Result<Response<HttpStream>, Box<std::error::Er
 		body: req.body.as_ref().map(|vec| &**vec)
 	};
 
-	#[cfg(feature = "openssl")]
-	println!("ssl");
-
 	let response = diy_request(&request)?;
 	Response::new(BufReader::new(response))
 }
 
 macro_rules! gen_func {
 	(nobody $name:ident, $method:expr) => {
+		/// Convenience function around [request](fn.request.html)
 		pub fn $name(url: Url) -> Result<Response<HttpStream>, Box<std::error::Error>> {
 			request(&Request::new(url).method($method))
 		}
 	};
 	(body $name:ident, $method:expr) => {
+		/// Convenience function around [request](fn.request.html)
 		pub fn $name(url: Url, body: Vec<u8>) -> Result<Response<HttpStream>, Box<std::error::Error>> {
 			request(&Request::new(url).method($method).body(body))
 		}
