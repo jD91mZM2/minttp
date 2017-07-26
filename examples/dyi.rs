@@ -12,6 +12,7 @@ fn main() {
 	let mut output = String::new();
 	{
 		let conn = minttp::diy_request(&DYIRequest {
+			ssl: false,
 			host: "example.com",
 			port: 80,
 			method: consts::GET,
