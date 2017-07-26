@@ -23,7 +23,7 @@ pub fn diy_request(req: &DYIRequest) -> io::Result<TcpStream> {
 
 	write!(
 		stream,
-		"{} {} HTTP/{}\n",
+		"{} {} HTTP/{}\r\n",
 		req.method,
 		req.path,
 		req.http_version
@@ -33,16 +33,17 @@ pub fn diy_request(req: &DYIRequest) -> io::Result<TcpStream> {
 		let mut bytes: Vec<_> = name.bytes().collect();
 		bytes.push(':' as u32 as u8);
 		bytes.append(&mut value.bytes().collect());
+		bytes.push('\r' as u32 as u8);
 		bytes.push('\n' as u32 as u8);
 
 		stream.write_all(&bytes)?;
 	}
 
-	stream.write_all(b"\n")?;
+	stream.write_all(b"\r\n")?;
 
 	if let Some(body) = req.body {
 		stream.write_all(body)?;
-		stream.write_all(b"\n")?;
+		stream.write_all(b"\r\n")?;
 	}
 
 	Ok(stream)
