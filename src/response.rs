@@ -35,7 +35,7 @@ impl<Stream: Read> Response<Stream> {
 	pub fn new(mut stream: BufReader<Stream>) -> Result<Response<Stream>, Box<std::error::Error>> {
 		let mut status = String::new();
 		stream.read_line(&mut status)?;
-		let mut parts = status.split(char::is_whitespace);
+		let mut parts = status.split_whitespace();
 
 		let http_version = parts.next().unwrap();
 		let status = match parts.next() {
