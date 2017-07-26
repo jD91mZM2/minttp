@@ -2,6 +2,7 @@
 name = "minttp"
 version = "0.1.0"
 authors = ["LEGOlord208 <LEGOlord208@krake.one>"]
+license = "MIT"
 
 [dependencies]
 openssl = { version = "0.9", optional = true }
