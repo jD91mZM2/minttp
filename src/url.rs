@@ -16,27 +16,30 @@ impl FromStr for Url {
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		let mut parts: Vec<_> = s.splitn(2, "://").collect();
-		let mut protocol = "http";
-		if parts.len() == 2 {
-			protocol = parts[0];
-		}
+		let protocol = if parts.len() == 2 {
+			parts[0]
+		} else {
+			"http"
+		};
 
-		parts = parts[parts.len() - 1].splitn(2, ":").collect();
+		parts = parts[parts.len() - 1].splitn(2, ':').collect();
 		let host = parts[0];
 
 		let port = if let Some(port) = parts.get(1) {
-			port.splitn(2, "/").next().unwrap().parse()?
+			port.splitn(2, '/').next().unwrap().parse()?
+		} else if protocol == "https" {
+			443
 		} else {
-			if protocol == "https" { 443 } else { 80 }
+			80
 		};
 
-		parts = parts[parts.len() - 1].splitn(2, "/").collect();
+		parts = parts[parts.len() - 1].splitn(2, '/').collect();
 
 		let mut fullpath = '/'.to_string();
 		let mut path = '/'.to_string();
 		let mut query = None;
 		if let Some(part) = parts.get(1) {
-			let parts: Vec<_> = part.splitn(2, "?").collect();
+			let parts: Vec<_> = part.splitn(2, '?').collect();
 			fullpath.push_str(part);
 			path.push_str(parts[0]);
 

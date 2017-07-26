@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::io::{self, Write, BufReader};
+use std::io::{self, BufReader, Write};
 use std::net::TcpStream;
 
 pub mod consts;
@@ -35,13 +35,14 @@ pub fn diy_request(req: &DYIRequest) -> io::Result<TcpStream> {
 		bytes.append(&mut value.bytes().collect());
 		bytes.push('\n' as u32 as u8);
 
-		stream.write(&bytes)?;
+		stream.write_all(&bytes)?;
 	}
 
-	stream.write(b"\n")?;
+	stream.write_all(b"\n")?;
 
 	if let Some(body) = req.body {
-		stream.write(body)?;
+		stream.write_all(body)?;
+		stream.write_all(b"\n")?;
 	}
 
 	Ok(stream)

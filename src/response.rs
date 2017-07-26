@@ -1,11 +1,12 @@
-use std::io::{Read, BufRead, BufReader};
-use std::collections::HashMap;
+
 use std::{self, fmt};
+use std::collections::HashMap;
+use std::io::{BufRead, BufReader, Read};
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum ResponseParseError {
 	InvalidStatusLine,
-	InvalidHeader,
+	InvalidHeader
 }
 impl std::error::Error for ResponseParseError {
 	fn description(&self) -> &str {
@@ -27,7 +28,7 @@ pub struct Response<Stream: Read> {
 	pub status: u16,
 	pub description: String,
 	pub headers: HashMap<String, String>,
-	pub body: BufReader<Stream>,
+	pub body: BufReader<Stream>
 }
 impl<Stream: Read> Response<Stream> {
 	pub fn new(mut stream: BufReader<Stream>) -> Result<Response<Stream>, Box<std::error::Error>> {
@@ -56,11 +57,14 @@ impl<Stream: Read> Response<Stream> {
 				break;
 			}
 
-			let mut parts = line.split(":");
-			headers.insert(parts.next().unwrap().trim().to_string(), match parts.next() {
-				Some(field) => field.trim().to_string(),
-				None => return Err(Box::new(ResponseParseError::InvalidHeader)),
-			});
+			let mut parts = line.splitn(2, ':');
+			headers.insert(
+				parts.next().unwrap().trim().to_string(),
+				match parts.next() {
+					Some(field) => field.trim().to_string(),
+					None => return Err(Box::new(ResponseParseError::InvalidHeader)),
+				}
+			);
 		}
 
 		Ok(Response {
@@ -68,7 +72,7 @@ impl<Stream: Read> Response<Stream> {
 			status: status,
 			description: description.to_string(),
 			headers: headers,
-			body: stream,
+			body: stream
 		})
 	}
 }

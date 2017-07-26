@@ -1,8 +1,8 @@
 extern crate minttp;
-use std::collections::HashMap;
-use std::io::{Read, BufReader};
-use minttp::{consts, DYIRequest};
+use minttp::{DYIRequest, consts};
 use minttp::response::Response;
+use std::collections::HashMap;
+use std::io::{BufReader, Read};
 
 fn main() {
 	let mut headers = HashMap::new();
