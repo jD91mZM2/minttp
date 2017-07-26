@@ -5,7 +5,7 @@ I'd say I succeeded.
 
 ## Usage
 
-Don't actually use it, please. This thing doesn't even support SSL!  
+Don't actually use it, please. This thing doesn't even support SSL (yet)!  
 Apart from that, it's simple to use.  
 <details>
 
@@ -76,7 +76,7 @@ and third is the "standard" layer with standard functions like `get`, `post`, et
 
 ## SSL
 
-SSL is **not** implemented, and might never be. This library is supposed to be simple and minimal.  
+SSL is **not** implemented, and *might* never be. This library is supposed to be simple and minimal.  
 *And not even supposed to be used.*
 
 ## URL parsing
