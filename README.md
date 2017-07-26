@@ -3,9 +3,19 @@
 minttp is an experiment to see if I could create a simple and minimal HTTP library without any dependencies.  
 I'd say I succeeded.
 
+
+## SSL
+
+This is added to a later version of the library.  
+Dependencies added! openssl and child dependencies.  
+It's still only one single top level dependency...
+
+*... and also optional!*  
+You can opt out of the feature with `default-features = false` in Cargo, or run your commands with `--no-default-features`.
+
 ## Usage
 
-Don't actually use it, please. This thing doesn't even support SSL (yet)!  
+Don't actually use it, please. This isn't meant to replace existing libraries... It's just a test!  
 Apart from that, it's simple to use.  
 <details>
 
@@ -73,11 +83,6 @@ That's not so hard, right? Great!
 Everything is built like layers. First is the "DYI" layer where literally everything is, well, "do it yourself".
 Second is the request layer (which you haven't seen yet),
 and third is the "standard" layer with standard functions like `get`, `post`, et.c.
-
-## SSL
-
-SSL is **not** implemented, and *might* never be. This library is supposed to be simple and minimal.  
-*And not even supposed to be used.*
 
 ## URL parsing
 

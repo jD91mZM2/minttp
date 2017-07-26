@@ -1,6 +1,11 @@
+#[cfg(feature = "openssl")]
+extern crate openssl;
+
 use std::collections::HashMap;
 use std::io::{self, BufReader, Write};
 use std::net::TcpStream;
+#[cfg(feature = "openssl")]
+use openssl::ssl::{SslMethod, SslConnectorBuilder, SslStream};
 
 pub mod consts;
 pub mod response;
@@ -8,8 +13,44 @@ pub mod url;
 use response::Response;
 use url::Url;
 
+pub enum HttpStream {
+	Plain(TcpStream),
+	#[cfg(feature = "openssl")]
+	TLS(SslStream<TcpStream>),
+}
+
+macro_rules! perform {
+	($self:expr, $fn:ident) => {
+		match *$self {
+			HttpStream::Plain(ref mut stream) => stream.$fn(),
+			#[cfg(feature = "openssl")]
+			HttpStream::TLS(ref mut stream) => stream.$fn(),
+		}
+	};
+	($self:expr, $fn:ident, $($args:expr),*) => {
+		match *$self {
+			HttpStream::Plain(ref mut stream) => stream.$fn($($args),*),
+			#[cfg(feature = "openssl")]
+			HttpStream::TLS(ref mut stream) => stream.$fn($($args),*),
+		}
+	}
+}
+impl Write for HttpStream {
+	fn write(&mut self, buf: &[u8]) -> io::Result<usize> { perform!(self, write, buf) }
+	fn flush(&mut self) -> io::Result<()> { perform!(self, flush) }
+	fn write_all(&mut self, buf: &[u8]) -> io::Result<()> { perform!(self, write_all, buf) }
+	fn write_fmt(&mut self, fmt: std::fmt::Arguments) -> io::Result<()> { perform!(self, write_fmt, fmt) }
+}
+impl io::Read for HttpStream {
+	fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> { perform!(self, read, buf) }
+	fn read_to_end(&mut self, buf: &mut Vec<u8>) -> io::Result<usize> { perform!(self, read_to_end, buf) }
+	fn read_to_string(&mut self, buf: &mut String) -> io::Result<usize> { perform!(self, read_to_string, buf) }
+	fn read_exact(&mut self, buf: &mut [u8]) -> io::Result<()> { perform!(self, read_exact, buf) }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DYIRequest<'a> {
+	pub ssl: bool,
 	pub host: &'a str,
 	pub port: u16,
 	pub method: &'a str,
@@ -18,8 +59,19 @@ pub struct DYIRequest<'a> {
 	pub headers: &'a HashMap<&'a str, &'a str>,
 	pub body: Option<&'a [u8]>
 }
-pub fn diy_request(req: &DYIRequest) -> io::Result<TcpStream> {
-	let mut stream = TcpStream::connect((req.host, req.port))?;
+pub fn diy_request(req: &DYIRequest) -> Result<HttpStream, Box<std::error::Error>> {
+	let mut stream = if req.ssl {
+		#[cfg(feature = "openssl")]
+		{
+			let builder = SslConnectorBuilder::new(SslMethod::tls())?.build();
+			let stream = TcpStream::connect((req.host, req.port))?;
+			HttpStream::TLS(builder.connect(req.host, stream)?)
+		}
+		#[cfg(not(feature = "openssl"))]
+		panic!("Can't use SSL without the --feature \"openssl\"");
+	} else {
+		HttpStream::Plain(TcpStream::connect((req.host, req.port))?)
+	};
 
 	write!(
 		stream,
@@ -54,7 +106,7 @@ pub struct Request {
 	pub url: Url,
 	pub method: String,
 	pub headers: HashMap<String, String>,
-	pub body: Option<Vec<u8>>
+	pub body: Option<Vec<u8>>,
 }
 
 impl Request {
@@ -63,7 +115,7 @@ impl Request {
 			url: url,
 			method: consts::GET.to_string(),
 			headers: HashMap::new(),
-			body: None
+			body: None,
 		}
 	}
 
@@ -83,9 +135,13 @@ impl Request {
 		self.body = Some(body);
 		self
 	}
+
+	pub fn request(req: &Request) -> Result<Response<HttpStream>, Box<std::error::Error>> {
+		request(req)
+	}
 }
 
-pub fn request(req: &Request) -> Result<Response<TcpStream>, Box<std::error::Error>> {
+pub fn request(req: &Request) -> Result<Response<HttpStream>, Box<std::error::Error>> {
 	let _body;
 	let mut headers: HashMap<&str, &str> = HashMap::new();
 	for (key, val) in &req.headers {
@@ -99,7 +155,8 @@ pub fn request(req: &Request) -> Result<Response<TcpStream>, Box<std::error::Err
 		headers.insert("Content-Length", &_body);
 	}
 
-	let response = diy_request(&DYIRequest {
+	let request = DYIRequest {
+		ssl: req.url.protocol == "https",
 		host: &req.url.host,
 		port: req.url.port,
 		method: &req.method,
@@ -107,19 +164,23 @@ pub fn request(req: &Request) -> Result<Response<TcpStream>, Box<std::error::Err
 		http_version: "1.1",
 		headers: &headers,
 		body: req.body.as_ref().map(|vec| &**vec)
-	})?;
+	};
 
+	#[cfg(feature = "openssl")]
+	println!("ssl");
+
+	let response = diy_request(&request)?;
 	Response::new(BufReader::new(response))
 }
 
 macro_rules! gen_func {
 	(nobody $name:ident, $method:expr) => {
-		pub fn $name(url: Url) -> Result<Response<TcpStream>, Box<std::error::Error>> {
+		pub fn $name(url: Url) -> Result<Response<HttpStream>, Box<std::error::Error>> {
 			request(&Request::new(url).method($method))
 		}
 	};
 	(body $name:ident, $method:expr) => {
-		pub fn $name(url: Url, body: Vec<u8>) -> Result<Response<TcpStream>, Box<std::error::Error>> {
+		pub fn $name(url: Url, body: Vec<u8>) -> Result<Response<HttpStream>, Box<std::error::Error>> {
 			request(&Request::new(url).method($method).body(body))
 		}
 	}
