@@ -16,7 +16,7 @@ pub mod url;
 use response::Response;
 use url::Url;
 
-/// A wrapper around either TcpStream or SslStream to combine them into one
+/// A wrapper around either `TcpStream` or `SslStream` to combine them into one
 /// type.
 pub enum HttpStream {
 	Plain(TcpStream),
@@ -54,7 +54,7 @@ impl io::Read for HttpStream {
 }
 
 /// The "do it yourself" request parameters.
-/// See [diy_request](fn.diy_request.html)
+/// See [`diy_request`](fn.diy_request.html)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DIYRequest<'a> {
 	pub ssl: bool,
@@ -111,7 +111,7 @@ pub fn diy_request(req: &DIYRequest) -> Result<HttpStream, Box<std::error::Error
 }
 
 /// This is a high level web request struct which acts like a wrapper around
-/// [DIYRequest](struct.DIYRequest.html).
+/// [`DIYRequest`](struct.DIYRequest.html).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Request {
 	pub url: Url,
@@ -136,7 +136,7 @@ impl Request {
 		self.url = url;
 		self
 	}
-	/// Set the request method. See [consts](consts/index.html)
+	/// Set the request method. See [`consts`](consts/index.html)
 	pub fn method<S: Into<String>>(mut self, method: S) -> Self {
 		self.method = method.into();
 		self
@@ -154,11 +154,11 @@ impl Request {
 		self
 	}
 
-	/// Shortcut for [request](fn.request.html)
+	/// Shortcut for [`request`](fn.request.html)
 	pub fn request(&self) -> Result<Response<HttpStream>, Box<std::error::Error>> { request(self) }
 }
 
-/// High level wrapper around [diy_request](fn.diy_request.html).
+/// High level wrapper around [`diy_request`](fn.diy_request.html).
 /// Applies important headers, such as "Host", "Connection" and
 /// "Content-Length".
 pub fn request(req: &Request) -> Result<Response<HttpStream>, Box<std::error::Error>> {
@@ -192,13 +192,13 @@ pub fn request(req: &Request) -> Result<Response<HttpStream>, Box<std::error::Er
 
 macro_rules! gen_func {
 	(nobody $name:ident, $method:expr) => {
-		/// Convenience function around [request](fn.request.html)
+		/// Convenience function around [`request`](fn.request.html)
 		pub fn $name(url: Url) -> Result<Response<HttpStream>, Box<std::error::Error>> {
 			request(&Request::new(url).method($method))
 		}
 	};
 	(body $name:ident, $method:expr) => {
-		/// Convenience function around [request](fn.request.html)
+		/// Convenience function around [`request`](fn.request.html)
 		pub fn $name(url: Url, body: Vec<u8>) -> Result<Response<HttpStream>, Box<std::error::Error>> {
 			request(&Request::new(url).method($method).body(body))
 		}
