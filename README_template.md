@@ -16,7 +16,7 @@ You can opt out of the feature with `default-features = false` in Cargo, or run 
 ## Usage
 
 Don't actually use it, please.  
-I mean, if you don't REALLY need minimality. Maybe some openssl mismatch or whatever... Then sure!  
+I mean, if you don't REALLY need minimality. Maybe some OpenSSL version mismatch or whatever when you don't need SSL, then sure!  
 But this generally is meant as a test and not to replace anything. It's not even hosted on cargo!  
 Apart from that, it's simple to use.  
 <details>
