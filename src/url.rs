@@ -34,14 +34,14 @@ impl FromStr for Url {
 		let protocol = if parts.len() == 2 { parts[0] } else { "http" };
 
 		parts = parts[parts.len() - 1].splitn(2, ':').collect();
-		let host = parts[0];
+		let mut host = parts[0];
 
 		let port = if let Some(port) = parts.get(1) {
 			port.splitn(2, '/').next().unwrap().parse()?
-		} else if protocol == "https" {
-			443
 		} else {
-			80
+			host = host.splitn(2, '/').next().unwrap();
+
+			if protocol == "https" { 443 } else { 80 }
 		};
 
 		parts = parts[parts.len() - 1].splitn(2, '/').collect();

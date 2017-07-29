@@ -7,4 +7,8 @@ fn main() {
 		.unwrap();
 	println!("{}", url);
 	println!("{:?}", url);
+
+	let url = "example.com/path".parse::<Url>().unwrap();
+	println!("{}", url);
+	println!("{:?}", url);
 }
