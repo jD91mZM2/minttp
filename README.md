@@ -15,7 +15,9 @@ You can opt out of the feature with `default-features = false` in Cargo, or run 
 
 ## Usage
 
-Don't actually use it, please. This isn't meant to replace existing libraries... It's just a test!  
+Don't actually use it, please.  
+I mean, if you don't REALLY need minimality. Maybe some openssl mismatch or whatever... Then sure!  
+But this generally is meant as a test and not to replace anything. It's not even hosted on cargo!  
 Apart from that, it's simple to use.  
 <details>
 
@@ -44,7 +46,6 @@ fn main() {
 			body: None
 		}).unwrap();
 		let mut response = Response::new(BufReader::new(conn)).unwrap();
-		println!("Status: {} ({})", response.status, response.description);
 		response.body.read_to_string(&mut output).unwrap();
 	}
 	println!("-------------- DIY Reqest");
@@ -69,7 +70,16 @@ fn main() {
 	let mut output = String::new();
 	{
 		let mut response = minttp::get(url).unwrap();
-		println!("Status: {} ({})", response.status, response.description);
+		println!(
+			"Status: {} {} ({})",
+			if response.is_success() {
+				"SUCCESS"
+			} else {
+				"FAILED"
+			},
+			response.status,
+			response.description
+		);
 		response.body.read_to_string(&mut output).unwrap();
 	}
 
