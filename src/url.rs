@@ -12,6 +12,7 @@ pub struct Url {
 	pub fullpath: String
 }
 
+/// Encode a URL component into a new `String`.
 pub fn encode(input: &str) -> String {
 	let mut output = String::with_capacity(input.len());
 
