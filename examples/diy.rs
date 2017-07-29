@@ -22,7 +22,6 @@ fn main() {
 			body: None
 		}).unwrap();
 		let mut response = Response::new(BufReader::new(conn)).unwrap();
-		println!("Status: {} ({})", response.status, response.description);
 		response.body.read_to_string(&mut output).unwrap();
 	}
 	println!("-------------- DIY Reqest");

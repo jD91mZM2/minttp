@@ -76,4 +76,7 @@ impl<Stream: Read> Response<Stream> {
 			body: stream
 		})
 	}
+
+	/// Returns true if self.status is 2XX, false otherwise
+	pub fn is_success(&self) -> bool { (self.status as f32 / 100.0).floor() == 2.0 }
 }

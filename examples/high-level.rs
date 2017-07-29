@@ -7,7 +7,16 @@ fn main() {
 	let mut output = String::new();
 	{
 		let mut response = minttp::get(url).unwrap();
-		println!("Status: {} ({})", response.status, response.description);
+		println!(
+			"Status: {} {} ({})",
+			if response.is_success() {
+				"SUCCESS"
+			} else {
+				"FAILED"
+			},
+			response.status,
+			response.description
+		);
 		response.body.read_to_string(&mut output).unwrap();
 	}
 
