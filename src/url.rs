@@ -12,6 +12,19 @@ pub struct Url {
 	pub fullpath: String
 }
 
+pub fn encode(input: &str) -> String {
+	let mut output = String::with_capacity(input.len());
+
+	for code in input.bytes() {
+		if (code >= 'a' as u8 && code <= 'z' as u8) || (code >= 'A' as u8 && code <= 'Z' as u8) {
+			output.push(code as char);
+		} else {
+			output.push_str(&format!("%{:X}", code));
+		}
+	}
+
+	output
+}
 impl FromStr for Url {
 	type Err = Box<::std::error::Error>;
 
