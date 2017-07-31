@@ -79,3 +79,41 @@ impl fmt::Display for Url {
 		)
 	}
 }
+
+#[cfg(test)]
+mod test {
+	use super::Url;
+
+	#[test]
+	fn test1() {
+		let url = "protocol://example.com:123/path?key=val"
+			.parse::<Url>()
+			.unwrap();
+		assert_eq!(
+			url,
+			Url {
+				protocol: "protocol".to_string(),
+				host: "example.com".to_string(),
+				port: 123,
+				path: "/path".to_string(),
+				query: Some("key=val".to_string()),
+				fullpath: "/path?key=val".to_string()
+			}
+		);
+	}
+	#[test]
+	fn test2() {
+		let url = "example.com/path".parse::<Url>().unwrap();
+		assert_eq!(
+			url,
+			Url {
+				protocol: "http".to_string(),
+				host: "example.com".to_string(),
+				port: 80,
+				path: "/path".to_string(),
+				query: None,
+				fullpath: "/path".to_string()
+			}
+		);
+	}
+}
