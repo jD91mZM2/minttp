@@ -1,5 +1,7 @@
 #[cfg(feature = "openssl")]
 extern crate openssl;
+#[cfg(feature = "http")]
+extern crate http;
 
 #[cfg(feature = "openssl")]
 use openssl::ssl::{SslConnectorBuilder, SslMethod, SslStream};
@@ -7,13 +9,16 @@ use std::collections::HashMap;
 use std::io::{self, BufReader, Write};
 use std::net::TcpStream;
 
+#[cfg(not(feature = "http"))]
 /// HTTP Method constants, such as GET, HEAD, et.c
 pub mod consts;
 /// Response parser
 pub mod response;
+#[cfg(not(feature = "http"))]
 /// Minimal URL parser
 pub mod url;
 use response::Response;
+#[cfg(not(feature = "http"))]
 use url::Url;
 
 /// A wrapper around either `TcpStream` or `SslStream` to combine them into one
@@ -63,7 +68,7 @@ pub struct DIYRequest<'a> {
 	pub method: &'a str,
 	pub path: &'a str,
 	pub http_version: &'a str,
-	pub headers: &'a HashMap<&'a str, &'a str>,
+	pub headers: &'a HashMap<&'a str, &'a [u8]>,
 	pub body: Option<&'a [u8]>
 }
 /// A minimal http helper.
@@ -91,9 +96,9 @@ pub fn diy_request(req: &DIYRequest) -> Result<HttpStream, Box<std::error::Error
 	)?;
 
 	for (name, value) in req.headers {
-		let mut bytes: Vec<_> = name.bytes().collect();
+		let mut bytes: Vec<_> = name.as_bytes().to_vec();
 		bytes.push(':' as u32 as u8);
-		bytes.append(&mut value.bytes().collect());
+		bytes.append(&mut value.to_vec());
 		bytes.push('\r' as u32 as u8);
 		bytes.push('\n' as u32 as u8);
 
@@ -110,22 +115,24 @@ pub fn diy_request(req: &DIYRequest) -> Result<HttpStream, Box<std::error::Error
 	Ok(stream)
 }
 
+#[cfg(not(feature = "http"))]
 /// This is a high level web request struct which acts like a wrapper around
 /// [`DIYRequest`](struct.DIYRequest.html).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Request {
 	pub url: Url,
-	pub method: String,
-	pub headers: HashMap<String, String>,
+	pub method: &'static str,
+	pub headers: HashMap<String, Vec<u8>>,
 	pub body: Option<Vec<u8>>
 }
 
+#[cfg(not(feature = "http"))]
 impl Request {
 	/// Create a new Request
 	pub fn new(url: Url) -> Request {
 		Request {
 			url: url,
-			method: consts::GET.to_string(),
+			method: consts::GET,
 			headers: HashMap::new(),
 			body: None
 		}
@@ -137,13 +144,13 @@ impl Request {
 		self
 	}
 	/// Set the request method. See [`consts`](consts/index.html)
-	pub fn method<S: Into<String>>(mut self, method: S) -> Self {
-		self.method = method.into();
+	pub fn method(mut self, method: &'static str) -> Self {
+		self.method = method;
 		self
 	}
 	/// Set the headers. Headers like "Host" are unecessary to add, because
 	/// they are added by default.
-	pub fn header<S: Into<String>>(mut self, key: S, val: S) -> Self {
+	pub fn header<S: Into<String>, B: Into<Vec<u8>>>(mut self, key: S, val: B) -> Self {
 		self.headers.insert(key.into(), val.into());
 		self
 	}
@@ -158,28 +165,29 @@ impl Request {
 	pub fn request(&self) -> Result<Response<HttpStream>, Box<std::error::Error>> { request(self) }
 }
 
+#[cfg(not(feature = "http"))]
 /// High level wrapper around [`diy_request`](fn.diy_request.html).
 /// Applies important headers, such as "Host", "Connection" and
 /// "Content-Length".
 pub fn request(req: &Request) -> Result<Response<HttpStream>, Box<std::error::Error>> {
 	let _body;
-	let mut headers: HashMap<&str, &str> = HashMap::new();
+	let mut headers: HashMap<&str, &[u8]> = HashMap::new();
 	for (key, val) in &req.headers {
 		headers.insert(&*key, &*val);
 	}
 
-	headers.insert("Host", &req.url.host);
-	headers.insert("Connection", "close");
+	headers.insert("Host", req.url.host.as_bytes());
+	headers.insert("Connection", b"close");
 	if let Some(ref body) = req.body {
 		_body = body.len().to_string();
-		headers.insert("Content-Length", &_body);
+		headers.insert("Content-Length", &_body.as_bytes());
 	}
 
 	let request = DIYRequest {
 		ssl: req.url.protocol == "https",
 		host: &req.url.host,
 		port: req.url.port,
-		method: &req.method,
+		method: req.method,
 		path: &req.url.fullpath,
 		http_version: "1.1",
 		headers: &headers,
@@ -189,26 +197,80 @@ pub fn request(req: &Request) -> Result<Response<HttpStream>, Box<std::error::Er
 	let response = diy_request(&request)?;
 	Response::new(BufReader::new(response))
 }
+#[cfg(feature = "http")]
+/// High level wrapper around [`diy_request`](fn.diy_request.html).
+/// Applies important headers, such as "Host", "Connection" and
+/// "Content-Length".
+pub fn request<T: AsRef<[u8]>>(req: &mut http::Request<T>) -> Result<Response<HttpStream>, Box<std::error::Error>> {
+	let body;
+	let mut headers: HashMap<&str, &[u8]> = HashMap::new();
+	for (key, val) in req.headers() {
+		headers.insert(key.as_str(), val.as_bytes());
+	}
+
+	headers.insert("Host", req.uri().host().unwrap_or_default().as_bytes());
+	headers.insert("Connection", b"close");
+
+	body = req.body().as_ref().len().to_string().into_bytes();
+	headers.insert("Content-Length", &body);
+
+	let ssl = req.uri().scheme().map(|s| s == "https").unwrap_or(false);
+	let path = req.uri().path();
+	let mut fullpath = String::with_capacity(
+		if path.is_empty() { 1 } else { path.len() } + 1 + req.uri().query().map(|s| s.len()).unwrap_or_default()
+	);
+	if path.is_empty() {
+		fullpath.push('/');
+	}
+	fullpath.push_str(req.uri().path());
+	fullpath.push_str(req.uri().query().unwrap_or_default());
+
+	let request = DIYRequest {
+		ssl: ssl,
+		host: &req.uri().host().unwrap_or_default(),
+		port: req.uri().port().unwrap_or(if ssl { 443 } else { 80 }),
+		method: req.method().as_str(),
+		path: &fullpath,
+		http_version: "1.1",
+		headers: &headers,
+		body: Some(req.body().as_ref())
+	};
+
+	let response = diy_request(&request)?;
+	Response::new(BufReader::new(response))
+}
 
 macro_rules! gen_func {
-	(nobody $name:ident, $method:expr) => {
+	(nobody $name:ident, $method:ident) => {
+		#[cfg(not(feature = "http"))]
 		/// Convenience function around [`request`](fn.request.html)
 		pub fn $name(url: Url) -> Result<Response<HttpStream>, Box<std::error::Error>> {
-			request(&Request::new(url).method($method))
+			request(&Request::new(url).method(consts::$method))
+		}
+		#[cfg(feature = "http")]
+		/// Convenience function around [`request`](fn.request.html)
+		pub fn $name(uri: http::Uri) -> Result<Response<HttpStream>, Box<std::error::Error>> {
+			request(&mut http::Request::builder().uri(uri).method(http::method::$method).body([]).unwrap())
 		}
 	};
-	(body $name:ident, $method:expr) => {
+	(body $name:ident, $method:ident) => {
+		#[cfg(not(feature = "http"))]
 		/// Convenience function around [`request`](fn.request.html)
 		pub fn $name(url: Url, body: Vec<u8>) -> Result<Response<HttpStream>, Box<std::error::Error>> {
-			request(&Request::new(url).method($method).body(body))
+			request(&Request::new(url).method(consts::$method).body(body))
+		}
+		#[cfg(feature = "http")]
+		/// Convenience function around [`request`](fn.request.html)
+		pub fn $name(uri: http::Uri, body: Vec<u8>) -> Result<Response<HttpStream>, Box<std::error::Error>> {
+			request(&mut http::Request::builder().uri(uri).method(http::method::$method).body(body).unwrap())
 		}
 	}
 }
-gen_func!(nobody get, consts::GET);
-gen_func!(nobody head, consts::HEAD);
-gen_func!(body post, consts::POST);
-gen_func!(body put, consts::PUT);
-gen_func!(nobody delete, consts::DELETE);
-gen_func!(nobody connect, consts::CONNECT);
-gen_func!(nobody trace, consts::TRACE);
-gen_func!(body patch, consts::PATCH);
+gen_func!(nobody get, GET);
+gen_func!(nobody head, HEAD);
+gen_func!(body post, POST);
+gen_func!(body put, PUT);
+gen_func!(nobody delete, DELETE);
+gen_func!(nobody connect, CONNECT);
+gen_func!(nobody trace, TRACE);
+gen_func!(body patch, PATCH);

@@ -13,6 +13,16 @@ It's still only one single top level dependency...
 *... and also optional!*  
 You can opt out of the feature with `default-features = false` in Cargo, or run your commands with `--no-default-features`.
 
+## [http](https://users.rust-lang.org/t/announcing-the-http-crate/12123)
+
+minttp **partially** (and optionally) implements http, which gives you united syntax for web requests  
+across libraries.  
+It currently only implements request, not response.
+
+To see it in action, check out `examples/http.rs`.
+
+*Note: The support for this works, but is kind of messy. It's disabled by default.*
+
 ## Usage
 
 Don't actually use it, please.  

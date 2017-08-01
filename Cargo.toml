@@ -6,6 +6,7 @@ license = "MIT"
 
 [dependencies]
 openssl = { version = "0.9", optional = true }
+http    = { git = 'https://github.com/carllerche/http', optional = true }
 
 [features]
 default = ["openssl"]
