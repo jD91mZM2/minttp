@@ -6,8 +6,8 @@ use std::io::{BufReader, Read};
 
 fn main() {
 	let mut headers = HashMap::new();
-	headers.insert("Host", "example.com");
-	headers.insert("Connection", "close");
+	headers.insert("Host", "example.com".as_bytes());
+	headers.insert("Connection", "close".as_bytes());
 
 	let mut output = String::new();
 	{
