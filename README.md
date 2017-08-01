@@ -15,13 +15,12 @@ You can opt out of the feature with `default-features = false` in Cargo, or run 
 
 ## [http](https://users.rust-lang.org/t/announcing-the-http-crate/12123)
 
-minttp **partially** (and optionally) implements http, which gives you united syntax for web requests  
-across libraries.  
-It currently only implements request, not response.
+minttp **optionally** implements the http crate, which gives you united syntax for web requests  
+across libraries.
 
 To see it in action, check out `examples/http.rs`.
 
-*Note: The support for this works, but is kind of messy. It's disabled by default.*
+*Note: The support for this is disabled by default.*
 
 ## Usage
 

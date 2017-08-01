@@ -1,5 +1,7 @@
 use std::{self, fmt};
 use std::collections::HashMap;
+#[cfg(feature = "http")]
+use std::io;
 use std::io::{BufRead, BufReader, Read};
 
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -27,7 +29,7 @@ pub struct Response<Stream: Read> {
 	pub http_version: String,
 	pub status: u16,
 	pub description: String,
-	pub headers: HashMap<String, String>,
+	pub headers: HashMap<String, Vec<u8>>,
 	pub body: BufReader<Stream>
 }
 impl<Stream: Read> Response<Stream> {
@@ -62,7 +64,7 @@ impl<Stream: Read> Response<Stream> {
 			headers.insert(
 				parts.next().unwrap().trim().to_string(),
 				match parts.next() {
-					Some(field) => field.trim().to_string(),
+					Some(field) => field.trim().as_bytes().to_vec(),
 					None => return Err(Box::new(ResponseParseError::InvalidHeader)),
 				}
 			);
@@ -77,6 +79,31 @@ impl<Stream: Read> Response<Stream> {
 		})
 	}
 
+	#[cfg(not(feature = "http"))]
 	/// Returns true if self.status is 2XX, false otherwise
 	pub fn is_success(&self) -> bool { (self.status as f32 / 100.0).floor() == 2.0 }
+
+	#[cfg(feature = "http")]
+	pub fn try_into(mut self) -> io::Result<::http::Response<Vec<u8>>> {
+		let mut body = Vec::new();
+		self.body.read_to_end(&mut body)?;
+
+		let headers: Vec<(&str, &[u8])> = self.headers.iter().map(|(k, v)| (&**k, &**v)).collect();
+
+		Ok(
+			::http::Response::builder()
+				.version(match &*self.http_version {
+					"HTTP/2.0" => ::http::version::HTTP_2,
+					"HTTP/0.9" => ::http::version::HTTP_09,
+					"HTTP/1.0" => ::http::version::HTTP_10,
+					"HTTP/1.1" => ::http::version::HTTP_11,
+					_ => ::http::version::HTTP_10, // Default because bother printing an error
+				})
+				.status(self.status)
+				.extension(self.description)
+				.headers(headers)
+				.body(body)
+				.unwrap()
+		)
+	}
 }

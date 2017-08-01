@@ -4,8 +4,6 @@ extern crate http;
 
 #[cfg(feature = "http")]
 use http::{Request, Uri};
-#[cfg(feature = "http")]
-use std::io::Read;
 
 #[cfg(feature = "http")]
 fn main() {
@@ -17,11 +15,15 @@ fn main() {
 		.body([])
 		.unwrap();
 
-	let mut output = String::new();
+	let output;
 	{
-		let mut response = minttp::request(&mut req).unwrap();
-		println!("Status: {} ({})", response.status, response.description);
-		response.body.read_to_string(&mut output).unwrap();
+		let response = minttp::request(&mut req).unwrap().try_into().unwrap();
+		println!(
+			"Status: {}",
+			response.status(),
+			// response.extensions().get::<String>().unwrap()
+		);
+		output = String::from_utf8_lossy(response.body()).to_string();
 	}
 
 	println!("-------------- High-level flexible request");
