@@ -1,10 +1,10 @@
-#[cfg(feature = "openssl")]
-extern crate openssl;
+#[cfg(feature = "native-tls")]
+extern crate native_tls;
 #[cfg(feature = "http")]
 extern crate http;
 
-#[cfg(feature = "openssl")]
-use openssl::ssl::{SslConnectorBuilder, SslMethod, SslStream};
+#[cfg(feature = "native-tls")]
+use native_tls::{TlsConnector, TlsStream};
 use std::collections::HashMap;
 use std::io::{self, BufReader, Write};
 use std::net::TcpStream;
@@ -21,26 +21,26 @@ use response::Response;
 #[cfg(not(feature = "http"))]
 use url::Url;
 
-/// A wrapper around either `TcpStream` or `SslStream` to combine them into one
+/// A wrapper around either `TcpStream` or `TlsStream` to combine them into one
 /// type.
 pub enum HttpStream {
 	Plain(TcpStream),
-	#[cfg(feature = "openssl")]
-	TLS(SslStream<TcpStream>)
+	#[cfg(feature = "native-tls")]
+	TLS(TlsStream<TcpStream>)
 }
 
 macro_rules! perform {
 	($self:expr, $fn:ident) => {
 		match *$self {
 			HttpStream::Plain(ref mut stream) => stream.$fn(),
-			#[cfg(feature = "openssl")]
+			#[cfg(feature = "native-tls")]
 			HttpStream::TLS(ref mut stream) => stream.$fn(),
 		}
 	};
 	($self:expr, $fn:ident, $($args:expr),*) => {
 		match *$self {
 			HttpStream::Plain(ref mut stream) => stream.$fn($($args),*),
-			#[cfg(feature = "openssl")]
+			#[cfg(feature = "native-tls")]
 			HttpStream::TLS(ref mut stream) => stream.$fn($($args),*),
 		}
 	}
@@ -75,14 +75,14 @@ pub struct DIYRequest<'a> {
 /// Literally only opens a TCP connection and serializes.
 pub fn diy_request(req: &DIYRequest) -> Result<HttpStream, Box<std::error::Error>> {
 	let mut stream = if req.ssl {
-		#[cfg(feature = "openssl")]
+		#[cfg(feature = "native-tls")]
 		{
-			let builder = SslConnectorBuilder::new(SslMethod::tls())?.build();
+			let builder = TlsConnector::builder()?.build()?;
 			let stream = TcpStream::connect((req.host, req.port))?;
 			HttpStream::TLS(builder.connect(req.host, stream)?)
 		}
-		#[cfg(not(feature = "openssl"))]
-		panic!("Can't use SSL without the --feature \"openssl\"");
+		#[cfg(not(feature = "native-tls"))]
+		panic!("Can't use SSL without the --feature \"native-tls\"");
 	} else {
 		HttpStream::Plain(TcpStream::connect((req.host, req.port))?)
 	};
