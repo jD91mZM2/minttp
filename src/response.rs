@@ -1,28 +1,8 @@
-use std::{self, fmt};
+use error::Error;
 use std::collections::HashMap;
 #[cfg(feature = "http")]
 use std::io;
 use std::io::{BufRead, BufReader, Read};
-
-#[derive(Debug, Eq, PartialEq, Clone)]
-pub enum ResponseParseError {
-	InvalidStatusLine,
-	InvalidHeader
-}
-impl std::error::Error for ResponseParseError {
-	fn description(&self) -> &str {
-		match *self {
-			ResponseParseError::InvalidStatusLine => "Invalid status line: Missing parameters",
-			ResponseParseError::InvalidHeader => "Invalid header: No value",
-		}
-	}
-}
-impl fmt::Display for ResponseParseError {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		use std::error::Error;
-		write!(f, "{}", self.description())
-	}
-}
 
 /// Response struct
 pub struct Response<Stream: Read> {
@@ -34,7 +14,7 @@ pub struct Response<Stream: Read> {
 }
 impl<Stream: Read> Response<Stream> {
 	/// Parse a stream into a response struct
-	pub fn new(mut stream: BufReader<Stream>) -> Result<Response<Stream>, Box<std::error::Error>> {
+	pub fn new(mut stream: BufReader<Stream>) -> Result<Response<Stream>, Error> {
 		let mut status = String::new();
 		stream.read_line(&mut status)?;
 		let mut parts = status.split_whitespace();
@@ -42,12 +22,12 @@ impl<Stream: Read> Response<Stream> {
 		let http_version = parts.next().unwrap();
 		let status = match parts.next() {
 			Some(field) => field,
-			None => return Err(Box::new(ResponseParseError::InvalidStatusLine)),
+			None => return Err(Error::InvalidStatusLine)
 		};
 		let status = status.parse()?;
 		let description = match parts.next() {
 			Some(field) => field,
-			None => return Err(Box::new(ResponseParseError::InvalidStatusLine)),
+			None => return Err(Error::InvalidStatusLine)
 		};
 
 		let mut headers = HashMap::new();
@@ -65,7 +45,7 @@ impl<Stream: Read> Response<Stream> {
 				parts.next().unwrap().trim().to_string(),
 				match parts.next() {
 					Some(field) => field.trim().as_bytes().to_vec(),
-					None => return Err(Box::new(ResponseParseError::InvalidHeader)),
+                    None => return Err(Error::InvalidHeader)
 				}
 			);
 		}

@@ -12,11 +12,15 @@ use std::net::TcpStream;
 #[cfg(not(feature = "http"))]
 /// HTTP Method constants, such as GET, HEAD, et.c
 pub mod consts;
+pub mod error;
 /// Response parser
 pub mod response;
 #[cfg(not(feature = "http"))]
 /// Minimal URL parser
 pub mod url;
+
+pub use error::Error;
+
 use response::Response;
 #[cfg(not(feature = "http"))]
 use url::Url;
@@ -73,7 +77,7 @@ pub struct DIYRequest<'a> {
 }
 /// A minimal http helper.
 /// Literally only opens a TCP connection and serializes.
-pub fn diy_request(req: &DIYRequest) -> Result<HttpStream, Box<std::error::Error>> {
+pub fn diy_request(req: &DIYRequest) -> Result<HttpStream, Error> {
 	let mut stream = if req.ssl {
 		#[cfg(feature = "native-tls")]
 		{
@@ -162,14 +166,14 @@ impl Request {
 	}
 
 	/// Shortcut for [`request`](fn.request.html)
-	pub fn request(&self) -> Result<Response<HttpStream>, Box<std::error::Error>> { request(self) }
+	pub fn request(&self) -> Result<Response<HttpStream>, Error> { request(self) }
 }
 
 #[cfg(not(feature = "http"))]
 /// High level wrapper around [`diy_request`](fn.diy_request.html).
 /// Applies important headers, such as "Host", "Connection" and
 /// "Content-Length".
-pub fn request(req: &Request) -> Result<Response<HttpStream>, Box<std::error::Error>> {
+pub fn request(req: &Request) -> Result<Response<HttpStream>, Error> {
 	let _body;
 	let mut headers: HashMap<&str, &[u8]> = HashMap::new();
 	for (key, val) in &req.headers {
@@ -201,7 +205,7 @@ pub fn request(req: &Request) -> Result<Response<HttpStream>, Box<std::error::Er
 /// High level wrapper around [`diy_request`](fn.diy_request.html).
 /// Applies important headers, such as "Host", "Connection" and
 /// "Content-Length".
-pub fn request<T: AsRef<[u8]>>(req: &mut http::Request<T>) -> Result<Response<HttpStream>, Box<std::error::Error>> {
+pub fn request<T: AsRef<[u8]>>(req: &mut http::Request<T>) -> Result<Response<HttpStream>, Error> {
 	let body;
 	let mut headers: HashMap<&str, &[u8]> = HashMap::new();
 	for (key, val) in req.headers() {
@@ -244,24 +248,24 @@ macro_rules! gen_func {
 	(nobody $name:ident, $method:ident) => {
 		#[cfg(not(feature = "http"))]
 		/// Convenience function around [`request`](fn.request.html)
-		pub fn $name(url: Url) -> Result<Response<HttpStream>, Box<std::error::Error>> {
+		pub fn $name(url: Url) -> Result<Response<HttpStream>, Error> {
 			request(&Request::new(url).method(consts::$method))
 		}
 		#[cfg(feature = "http")]
 		/// Convenience function around [`request`](fn.request.html)
-		pub fn $name(uri: http::Uri) -> Result<Response<HttpStream>, Box<std::error::Error>> {
+		pub fn $name(uri: http::Uri) -> Result<Response<HttpStream>, Error> {
 			request(&mut http::Request::builder().uri(uri).method(http::method::$method).body([]).unwrap())
 		}
 	};
 	(body $name:ident, $method:ident) => {
 		#[cfg(not(feature = "http"))]
 		/// Convenience function around [`request`](fn.request.html)
-		pub fn $name(url: Url, body: Vec<u8>) -> Result<Response<HttpStream>, Box<std::error::Error>> {
+		pub fn $name(url: Url, body: Vec<u8>) -> Result<Response<HttpStream>, Error> {
 			request(&Request::new(url).method(consts::$method).body(body))
 		}
 		#[cfg(feature = "http")]
 		/// Convenience function around [`request`](fn.request.html)
-		pub fn $name(uri: http::Uri, body: Vec<u8>) -> Result<Response<HttpStream>, Box<std::error::Error>> {
+		pub fn $name(uri: http::Uri, body: Vec<u8>) -> Result<Response<HttpStream>, Error> {
 			request(&mut http::Request::builder().uri(uri).method(http::method::$method).body(body).unwrap())
 		}
 	}
