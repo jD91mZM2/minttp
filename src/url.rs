@@ -1,3 +1,4 @@
+use std::fmt::Write;
 use std::fmt;
 use std::str::FromStr;
 
@@ -20,7 +21,7 @@ pub fn encode(input: &str) -> String {
 		if (code >= 'a' as u8 && code <= 'z' as u8) || (code >= 'A' as u8 && code <= 'Z' as u8) {
 			output.push(code as char);
 		} else {
-			output.push_str(&format!("%{:X}", code));
+			write!(output, "%{:X}", code).unwrap();
 		}
 	}
 
