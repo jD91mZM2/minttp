@@ -9,8 +9,8 @@ use std::num::ParseIntError;
 /// minttp error type
 #[derive(Debug)]
 pub enum Error {
-	InvalidHeader,
-	InvalidStatusLine,
+    InvalidHeader,
+    InvalidStatusLine,
     IoError(IoError),
     ParseIntError(ParseIntError),
     #[cfg(feature = "native-tls")]
