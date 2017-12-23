@@ -18,7 +18,7 @@ pub fn encode(input: &str) -> String {
     let mut output = String::with_capacity(input.len());
 
     for code in input.bytes() {
-        if (code >= 'a' as u8 && code <= 'z' as u8) || (code >= 'A' as u8 && code <= 'Z' as u8) {
+        if (code >= b'a' && code <= b'z') || (code >= b'A' && code <= b'Z') {
             output.push(code as char);
         } else {
             write!(output, "%{:X}", code).unwrap();

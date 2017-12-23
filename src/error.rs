@@ -22,7 +22,7 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::InvalidHeader       => write!(f, "{}", self.description()),
+            Error::InvalidHeader |
             Error::InvalidStatusLine   => write!(f, "{}", self.description()),
             Error::IoError(ref inner)  => write!(f, "{}", inner),
             Error::ParseIntError(ref inner) => write!(f, "{}", inner),

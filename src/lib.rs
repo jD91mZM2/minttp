@@ -184,7 +184,7 @@ pub fn request(req: &Request) -> Result<Response<HttpStream>, Error> {
     headers.insert("Connection", b"close");
     if let Some(ref body) = req.body {
         _body = body.len().to_string();
-        headers.insert("Content-Length", &_body.as_bytes());
+        headers.insert("Content-Length", _body.as_bytes());
     }
 
     let request = DIYRequest {

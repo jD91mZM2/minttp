@@ -5,9 +5,9 @@ use std::collections::HashMap;
 use std::io::{BufReader, Read};
 
 fn main() {
-	let mut headers = HashMap::new();
-	headers.insert("Host", "example.com".as_bytes());
-	headers.insert("Connection", "close".as_bytes());
+	let mut headers: HashMap<_, &[u8]> = HashMap::new();
+	headers.insert("Host", b"example.com");
+	headers.insert("Connection", b"close");
 
 	let mut output = String::new();
 	{
